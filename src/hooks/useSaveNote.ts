@@ -1,8 +1,6 @@
 import { useCallback } from 'react';
 import { useAppStore } from '@/store';
-import { saveNotesToGist } from '@/lib/gist';
-import type { Note, RawtesDB } from '@/types/note';
-import { addPendingOp } from '@/db/pendingQueue';
+import type { Note } from '@/types/note';
 import debounce from 'lodash.debounce';
 
 export function useSaveNote() {

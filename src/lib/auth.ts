@@ -54,6 +54,11 @@ export async function pollForToken(deviceCode: string): Promise<TokenResponse> {
     ? `${PROXY_URL}?url=${encodeURIComponent('https://github.com/login/oauth/access_token')}&_=${timestamp}`
     : 'https://github.com/login/oauth/access_token';
 
+  const body = new URLSearchParams();
+  body.append('client_id', CLIENT_ID);
+  body.append('device_code', deviceCode);
+  body.append('grant_type', 'urn:ietf:params:oauth:grant-type:device_code');
+
   const res = await fetch(url, {
     method: 'POST',
     headers: {

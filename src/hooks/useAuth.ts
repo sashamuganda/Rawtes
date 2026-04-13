@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAppStore } from '@/store';
 import { pollForToken, fetchUserProfile } from '@/lib/auth';
 
@@ -13,7 +13,7 @@ export function useAuth() {
       if (status !== 'polling' || !deviceData) return;
 
       try {
-        const res = await pollForToken(deviceData.device_code);
+        const res = await pollForToken(deviceData.device_code) as any;
         
         if (res.access_token) {
           setToken(res.access_token);

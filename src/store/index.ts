@@ -60,7 +60,7 @@ export interface SyncSlice {
 let isSyncing = false;
 let syncAgain = false;
 
-export const createSyncSlice: StateCreator<SyncSlice & NotesSlice> = (set, get) => ({
+export const createSyncSlice: StateCreator<AppStore, [], [], SyncSlice> = (set, get) => ({
   gistId: localStorage.getItem('nk_gist_id'),
   lastSyncedAt: localStorage.getItem('nk_last_synced'),
   syncStatus: 'idle',
@@ -80,7 +80,7 @@ export const createSyncSlice: StateCreator<SyncSlice & NotesSlice> = (set, get) 
   setPendingCount: (count) => set({ pendingCount: count }),
 
   triggerSync: async () => {
-    const { gistId, notes, labels, settings, setSyncStatus, setLastSyncedAt } = get();
+    const { gistId, setSyncStatus, setLastSyncedAt } = get();
     if (!gistId) return;
 
     if (isSyncing) {
