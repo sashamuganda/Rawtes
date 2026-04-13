@@ -1,9 +1,27 @@
 import { githubFetch } from './github';
 
 const CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
-const PROXY_URL = import.meta.env.VITE_PROXY_URL || 'https://corsproxy.io/?url=';
 
-if (!import.meta.env.VITE_PROXY_URL) {
+// Determine proxy URL:
+// 1. User provided VITE_PROXY_URL
+// 2. If hosted on Vercel/Netlify, use local /api/proxy
+// 3. Fallback to public corsproxy.io
+const getProxyUrl = () => {
+  if (import.meta.env.VITE_PROXY_URL) return import.meta.env.VITE_PROXY_URL;
+
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname.includes('vercel.app') || hostname.includes('netlify.app')) {
+      return `${window.location.origin}/api/proxy`;
+    }
+  }
+
+  return 'https://corsproxy.io/?url=';
+};
+
+const PROXY_URL = getProxyUrl();
+
+if (!import.meta.env.VITE_PROXY_URL && PROXY_URL.includes('corsproxy.io')) {
   console.warn('Rawtes: Using public CORS proxy. For better security, please set VITE_PROXY_URL to your own private proxy.');
 }
 
