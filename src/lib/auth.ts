@@ -1,7 +1,11 @@
 import { githubFetch } from './github';
 
 const CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
-const PROXY_URL = import.meta.env.VITE_PROXY_URL;
+const PROXY_URL = import.meta.env.VITE_PROXY_URL || 'https://corsproxy.io/?url=';
+
+if (!import.meta.env.VITE_PROXY_URL) {
+  console.warn('Rawtes: Using public CORS proxy. For better security, please set VITE_PROXY_URL to your own private proxy.');
+}
 
 export interface DeviceCodeResponse {
   device_code: string;
@@ -20,9 +24,9 @@ export interface TokenResponse {
 }
 
 export async function startDeviceFlow(): Promise<DeviceCodeResponse> {
-  const url = PROXY_URL
-    ? `${PROXY_URL}?url=${encodeURIComponent('https://github.com/login/device/code')}`
-    : 'https://github.com/login/device/code';
+  const url = PROXY_URL.includes('?url=')
+    ? `${PROXY_URL}${encodeURIComponent('https://github.com/login/device/code')}`
+    : `${PROXY_URL}?url=${encodeURIComponent('https://github.com/login/device/code')}`;
 
   const res = await fetch(url, {
     method: 'POST',
@@ -44,9 +48,9 @@ export async function startDeviceFlow(): Promise<DeviceCodeResponse> {
 }
 
 export async function pollForToken(deviceCode: string): Promise<TokenResponse> {
-  const url = PROXY_URL
-    ? `${PROXY_URL}?url=${encodeURIComponent('https://github.com/login/oauth/access_token')}`
-    : 'https://github.com/login/oauth/access_token';
+  const url = PROXY_URL.includes('?url=')
+    ? `${PROXY_URL}${encodeURIComponent('https://github.com/login/oauth/access_token')}`
+    : `${PROXY_URL}?url=${encodeURIComponent('https://github.com/login/oauth/access_token')}`;
 
   const res = await fetch(url, {
     method: 'POST',
