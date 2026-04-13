@@ -1,6 +1,7 @@
 import { githubFetch } from './github';
 
 const CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
+const PROXY_URL = import.meta.env.VITE_PROXY_URL;
 
 export interface DeviceCodeResponse {
   device_code: string;
@@ -19,7 +20,11 @@ export interface TokenResponse {
 }
 
 export async function startDeviceFlow(): Promise<DeviceCodeResponse> {
-  const res = await fetch('https://github.com/login/device/code', {
+  const url = PROXY_URL
+    ? `${PROXY_URL}?url=${encodeURIComponent('https://github.com/login/device/code')}`
+    : 'https://github.com/login/device/code';
+
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
@@ -39,7 +44,11 @@ export async function startDeviceFlow(): Promise<DeviceCodeResponse> {
 }
 
 export async function pollForToken(deviceCode: string): Promise<TokenResponse> {
-  const res = await fetch('https://github.com/login/oauth/access_token', {
+  const url = PROXY_URL
+    ? `${PROXY_URL}?url=${encodeURIComponent('https://github.com/login/oauth/access_token')}`
+    : 'https://github.com/login/oauth/access_token';
+
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
