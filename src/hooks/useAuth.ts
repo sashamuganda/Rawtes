@@ -4,40 +4,57 @@ import { pollForToken, fetchUserProfile } from '@/lib/auth';
 
 export function useAuth() {
   const { status, deviceData, setToken, setUser, logout } = useAppStore();
-  const [polling, setPolling] = useState(false);
 
   useEffect(() => {
-    let intervalId: any;
+    let timeoutId: any;
+    let currentInterval = (deviceData?.interval || 5) * 1000;
 
-    if (status === 'polling' && deviceData && !polling) {
-      setPolling(true);
-      
-      intervalId = setInterval(async () => {
-        try {
-          const res = await pollForToken(deviceData.device_code);
+    const poll = async () => {
+      if (status !== 'polling' || !deviceData) return;
+
+      try {
+        const res = await pollForToken(deviceData.device_code);
+        
+        if (res.access_token) {
+          setToken(res.access_token);
           
-          if (res.access_token) {
-            clearInterval(intervalId);
-            setToken(res.access_token);
+          try {
             const user = await fetchUserProfile();
             setUser(user);
-            setPolling(false);
-          } else if (res.error && res.error !== 'authorization_pending') {
-            clearInterval(intervalId);
-            setPolling(false);
-            // Handle other errors (slow_down, expired_token, etc)
+          } catch (err) {
+            useAppStore.setState({ status: 'authenticated' });
           }
-        } catch (e) {
-          clearInterval(intervalId);
-          setPolling(false);
+          return; // Stop polling
+        } 
+        
+        if (res.error) {
+          if (res.error === 'slow_down') {
+            currentInterval = (res.interval ? res.interval : (currentInterval / 1000) + 5) * 1000;
+          } else if (res.error === 'expired_token' || res.error === 'access_denied') {
+            useAppStore.setState({ status: 'error', error: res.error_description || res.error });
+            return; // Stop polling
+          }
         }
-      }, (deviceData.interval || 5) * 1000);
+      } catch (e) {
+        // Continue
+      }
+
+      // Schedule next poll
+      timeoutId = setTimeout(poll, currentInterval);
+    };
+
+    if (status === 'polling' && deviceData) {
+      console.log('useAuth: Starting polling chain...');
+      timeoutId = setTimeout(poll, currentInterval);
     }
 
     return () => {
-      if (intervalId) clearInterval(intervalId);
+      if (timeoutId) {
+        console.log('useAuth: Cleaning up polling.');
+        clearTimeout(timeoutId);
+      }
     };
-  }, [status, deviceData, polling, setToken, setUser]);
+  }, [status, deviceData, setToken, setUser]);
 
   return { status, logout };
 }

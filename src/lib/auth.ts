@@ -3,6 +3,10 @@ import { githubFetch } from './github';
 const CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 const PROXY_URL = import.meta.env.VITE_PROXY_URL;
 
+if (!PROXY_URL) {
+  console.warn('Rawtes: VITE_PROXY_URL is not set. Authentication will likely fail due to CORS. See PROXY_SETUP.md');
+}
+
 export interface DeviceCodeResponse {
   device_code: string;
   user_code: string;
@@ -44,25 +48,23 @@ export async function startDeviceFlow(): Promise<DeviceCodeResponse> {
 }
 
 export async function pollForToken(deviceCode: string): Promise<TokenResponse> {
+  // Add cache-busting timestamp
+  const timestamp = Date.now();
   const url = PROXY_URL
-    ? `${PROXY_URL}?url=${encodeURIComponent('https://github.com/login/oauth/access_token')}`
+    ? `${PROXY_URL}?url=${encodeURIComponent('https://github.com/login/oauth/access_token')}&_=${timestamp}`
     : 'https://github.com/login/oauth/access_token';
 
   const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: JSON.stringify({
-      client_id: CLIENT_ID,
-      device_code: deviceCode,
-      grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
-    }),
+    body: body.toString(),
   });
 
   if (!res.ok) {
-    throw new Error('Polling failed');
+    throw new Error(`Polling failed: ${res.status}`);
   }
 
   return res.json();

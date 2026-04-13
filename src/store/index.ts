@@ -54,9 +54,13 @@ export interface SyncSlice {
   setSyncStatus: (status: SyncSlice['syncStatus']) => void;
   setLastSyncedAt: (at: string | null) => void;
   setPendingCount: (count: number) => void;
+  triggerSync: () => Promise<void>;
 }
 
-export const createSyncSlice: StateCreator<SyncSlice> = (set) => ({
+let isSyncing = false;
+let syncAgain = false;
+
+export const createSyncSlice: StateCreator<SyncSlice & NotesSlice> = (set, get) => ({
   gistId: localStorage.getItem('nk_gist_id'),
   lastSyncedAt: localStorage.getItem('nk_last_synced'),
   syncStatus: 'idle',
@@ -74,6 +78,50 @@ export const createSyncSlice: StateCreator<SyncSlice> = (set) => ({
     else localStorage.removeItem('nk_last_synced');
   },
   setPendingCount: (count) => set({ pendingCount: count }),
+
+  triggerSync: async () => {
+    const { gistId, notes, labels, settings, setSyncStatus, setLastSyncedAt } = get();
+    if (!gistId) return;
+
+    if (isSyncing) {
+      syncAgain = true;
+      return;
+    }
+
+    isSyncing = true;
+    setSyncStatus('syncing');
+
+    try {
+      const { saveNotesToGist } = await import('@/lib/gist');
+      
+      const performSync = async () => {
+        syncAgain = false;
+        // Always get the LATEST state from the store before pushing
+        const currentData = {
+          version: 1,
+          lastModified: new Date().toISOString(),
+          notes: get().notes,
+          labels: get().labels,
+          settings: get().settings,
+        };
+        
+        await saveNotesToGist(gistId, currentData);
+        
+        if (syncAgain) {
+          await performSync();
+        }
+      };
+
+      await performSync();
+      setSyncStatus('idle');
+      setLastSyncedAt(new Date().toISOString());
+    } catch (e) {
+      console.error('Sync failed:', e);
+      setSyncStatus('error');
+    } finally {
+      isSyncing = false;
+    }
+  },
 });
 
 /* Root Store */

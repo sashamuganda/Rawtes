@@ -5,6 +5,7 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 import { LoginPage, NotesPage, ArchivePage, TrashPage } from '@/pages/Notes';
 import { SettingsPage } from '@/pages/Settings';
 import { NoteEditor } from '@/components/notes/NoteEditor';
+import { useAuth } from '@/hooks/useAuth';
 
 // Initialize TanStack Query
 const queryClient = new QueryClient({
@@ -35,6 +36,8 @@ const AuthenticatedApp: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  useAuth();
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter basename="/Rawtes/">

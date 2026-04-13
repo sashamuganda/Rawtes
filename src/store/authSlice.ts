@@ -28,12 +28,14 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
     set({ token });
     if (token) {
       localStorage.setItem('nk_token', obfuscateToken(token));
+      set({ status: 'authenticated' });
     } else {
       localStorage.removeItem('nk_token');
+      set({ status: 'idle', user: null, deviceData: null });
     }
   },
 
-  setUser: (user) => set({ user }),
+  setUser: (user) => set({ user, status: user ? 'authenticated' : 'polling' }),
 
   login: async () => {
     try {

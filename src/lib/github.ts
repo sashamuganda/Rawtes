@@ -20,8 +20,12 @@ export class RateLimitError extends Error {
   }
 }
 
+import { deobfuscateToken } from './crypto';
+
 function getStoredToken(): string | null {
-  return localStorage.getItem('nk_token');
+  const token = localStorage.getItem('nk_token');
+  if (!token) return null;
+  return deobfuscateToken(token);
 }
 
 export function clearToken() {
