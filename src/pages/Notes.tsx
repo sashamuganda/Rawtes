@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppStore } from '@/store';
 import { useNotes } from '@/hooks/useNotes';
+import { useAuth } from '@/hooks/useAuth';
 import { NoteGrid } from '@/components/notes/NoteCard';
 import { CreateNoteBar } from '@/components/notes/CreateNoteBar';
 import { Button } from '@/components/ui/Button';
@@ -10,6 +11,7 @@ import { Info } from 'lucide-react';
 /* --- Login Page --- */
 export const LoginPage: React.FC = () => {
   const { login } = useAppStore();
+  useAuth();
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg px-6">
